@@ -10,13 +10,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: { python-version: '3.12' }
-      - name: Python tests
+        with:
+          python-version: '3.12'
+      - name: Python unit tests
         run: python -m unittest discover -s 02-hardened-api/tests -v
-      - name: Terraform format
+      - name: Terraform syntax validation
         run: |
-          docker run --rm -v "$PWD/03-secure-aws-static-site:/work" -w /work hashicorp/terraform:1.9.8 fmt -check
-      - name: Static checks
+          docker run --rm -v "$PWD/03-secure-aws-static-site:/work" -w /work hashicorp/terraform:1.9.8 init -backend=false
+          docker run --rm -v "$PWD/03-secure-aws-static-site:/work" -w /work hashicorp/terraform:1.9.8 validate
+      - name: Static security configuration checks
         run: |
           grep -q 'readOnlyRootFilesystem: true' 04-k8s-secure-api/deployment.yaml
           grep -q 'block_public_policy = true' 03-secure-aws-static-site/main.tf
